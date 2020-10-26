@@ -1,8 +1,8 @@
 package json_interface_parser
 
 import (
-	"fmt"
 	"io/ioutil"
+	"log"
 	"reflect"
 	"strconv"
 	"strings"
@@ -56,8 +56,6 @@ func (jsp *jsonStructParser) cb(key []byte, value []byte, dataType jsonparser.Va
 			Type: reflect.TypeOf(subObj),
 		})
 		jsp.subObjValueMap[string(key)] = reflect.ValueOf(subObj)
-		fmt.Println(reflect.TypeOf(subObj))
-		fmt.Println(jsp.subObjValueMap[string(key)])
 	case jsonparser.Array: //数组结构
 		newParser := newJsonStructParser()
 		jsp.structFields = append(jsp.structFields, reflect.StructField{
@@ -85,7 +83,7 @@ func (jsp *jsonStructParser) cb(key []byte, value []byte, dataType jsonparser.Va
 		case "bool":
 			userDefinedType = reflect.TypeOf(false)
 		default:
-			fmt.Println("warning val: ", string(value), " in json is not supported")
+			log.Println("warning: val", string(value), " in json is not supported")
 		}
 		if len(arr) > 1 {
 			jsp.valueMap[string(key)] = arr[1]
@@ -95,14 +93,14 @@ func (jsp *jsonStructParser) cb(key []byte, value []byte, dataType jsonparser.Va
 			Type: userDefinedType,
 		})
 	default:
-		fmt.Println("warning dataType: ", string(value), " in json is not supported")
+		log.Println("warning: dataType ", string(value), " in json is not supported")
 	}
 	return nil
 }
 
 func (jsp *jsonStructParser) json2Struct(jsonData []byte) interface{} {
 	if err := jsonparser.ObjectEach(jsonData, jsp.cb); err != nil {
-		fmt.Println("jsonparser.ObjectEach error = ", err)
+		log.Println("jsonparser.ObjectEach error = ", err)
 	}
 	typ := reflect.StructOf(jsp.structFields)
 	v := reflect.New(typ).Elem()
@@ -115,9 +113,6 @@ func (jsp *jsonStructParser) json2Struct(jsonData []byte) interface{} {
 		}
 
 		if newty.Field(i).Type.Kind() == reflect.Ptr{
-			fmt.Println("IN STRUCT TYPE")
-			fmt.Println(newty.Field(i).Type)
-			//fmt.Println(reflect.TypeOf(subObj))
 			v.Field(i).Set(subObj)
 			continue
 		}
@@ -144,7 +139,7 @@ func (jsp *jsonStructParser) json2Struct(jsonData []byte) interface{} {
 			}
 
 		default:
-			fmt.Println("warning val: ", valStr, " in value is not supported")
+			log.Println("warning val: ", valStr, " in value is not supported")
 		}
 	}
 	s := v.Addr().Interface()
