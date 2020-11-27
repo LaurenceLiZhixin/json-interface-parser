@@ -1,5 +1,3 @@
-github.com/LaurenceLiZhixin/dubbo-go-hessian2 v1.7.3 h1:j2WAG6LPvsBmAqItsKxbwDNjlNqAeKzTQLQJlb9AXuw=
-github.com/LaurenceLiZhixin/dubbo-go-hessian2 v1.7.3/go.mod h1:/e2CHYUlackFzP9rqYdQcaVJRaqRYFJz90jap5WfUeE=
 github.com/apache/dubbo-go-hessian2 v1.2.5-0.20201127003856-07e93979195d h1:DY4fwcQyqpDRQSMqoMhThybbPY3VqlkrWdhWeoMBd1c=
 github.com/apache/dubbo-go-hessian2 v1.2.5-0.20201127003856-07e93979195d/go.mod h1:7rEw9guWABQa6Aqb8HeZcsYPHsOS7XT1qtJvkmI6c5w=
 github.com/apache/dubbo-go-hessian2 v1.7.0 h1:u2XxIuepu/zb6JcGZc7EbvKboXdKoJbf7rbmeq6SF1w=
