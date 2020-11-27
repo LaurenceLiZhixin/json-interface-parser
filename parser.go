@@ -1,6 +1,7 @@
 package json_interface_parser
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"reflect"
@@ -9,6 +10,7 @@ import (
 	"time"
 
 	"github.com/buger/jsonparser"
+	hessian2 "github.com/apache/dubbo-go-hessian2"
 )
 
 type jsonStructParser struct {
@@ -51,6 +53,7 @@ func (jsp *jsonStructParser) cb(key []byte, value []byte, dataType jsonparser.Va
 	case jsonparser.Object: // 嵌套子结构
 		newParser := newJsonStructParser()
 		subObj := newParser.json2Struct(value)
+		hessian2.RegisterPOJOMapping(getJavaClassName(subObj), subObj)
 		jsp.structFields = append(jsp.structFields, reflect.StructField{
 			Name: string(key),
 			Type: reflect.TypeOf(subObj),
@@ -58,9 +61,11 @@ func (jsp *jsonStructParser) cb(key []byte, value []byte, dataType jsonparser.Va
 		jsp.subObjValueMap[string(key)] = reflect.ValueOf(subObj)
 	case jsonparser.Array: //数组结构
 		newParser := newJsonStructParser()
+		subObj := newParser.json2Struct(value)
+		hessian2.RegisterPOJOMapping(getJavaClassName(subObj), subObj) // TODO 目前存在问题
 		jsp.structFields = append(jsp.structFields, reflect.StructField{
 			Name: string(key),
-			Type: reflect.TypeOf(newParser.json2Struct(value)),
+			Type: reflect.TypeOf(subObj),
 		})
 
 	case jsonparser.String: // 正常结构
@@ -156,22 +161,18 @@ func (jsp *jsonStructParser) Jsonfile2Struct(filePath string) (interface{}, erro
 
 // RemoveJavaClassNameField remove origin interface @v's target field by @targetName
 func (jsp *jsonStructParser) RemoveTargetNameField(v interface{}, targetName string) interface{} {
-	//fmt.Println("hhhhhhhhh")
 	typ := reflect.TypeOf(v).Elem()
 	val := reflect.ValueOf(v).Elem()
 	nums := val.NumField()
-	//fmt.Println("hhhhhhhhh")
 	structFields := make([]reflect.StructField, 0)
 	fieldMap := make(map[string]reflect.Value)
 	for i := 0; i < nums; i++ {
 		if typ.Field(i).Name != targetName {
-			//fmt.Println("not java ClassName")
 			structFields = append(structFields, reflect.StructField{
 				Name: typ.Field(i).Name,
 				Type: typ.Field(i).Type,
 			})
 			fieldMap[typ.Field(i).Name] = val.Field(i)
-			//fmt.Println("hhhhhhhhh")
 		}
 	}
 	newtyp := reflect.StructOf(structFields)
@@ -180,6 +181,18 @@ func (jsp *jsonStructParser) RemoveTargetNameField(v interface{}, targetName str
 	for i := 0; i < nums-1; i++ {
 		newi.Field(i).Set(fieldMap[newty.Field(i).Name])
 	}
-	//fmt.Printf("after refactory interface = %+v", newi.Addr().Interface())
 	return newi.Addr().Interface()
+}
+
+func getJavaClassName(pkg interface{}) string {
+	val := reflect.ValueOf(pkg).Elem()
+	typ := reflect.TypeOf(pkg).Elem()
+	nums := val.NumField()
+	for i := 0; i < nums; i++ {
+		if typ.Field(i).Name == "JavaClassName" {
+			return val.Field(i).String()
+		}
+	}
+	fmt.Println("error: JavaClassName not found")
+	return ""
 }
